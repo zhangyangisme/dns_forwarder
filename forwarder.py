@@ -34,24 +34,23 @@ def send_request(request):
 
 def forward_udp_dns(udp_sock):
     queues = []
-    for i in range(3):
+    for i in range(4):
         queue = Queue.Queue()
         t = Consumer(queue)
         queues.append(queue)
         t.setDaemon(False)
         t.start()
     while True:
-        i = 0
+        if i == 4:
+            i = 0
         try:
             request_data,address = udp_sock.recvfrom(1024)
             print address
-            queues[i].put((udp_sock,request_data,address))
-            i = i + 1
-            if(i == 3):
-                i = 0
         except Exception,e:
             print "socket error",Exception,":",e
-
+        else:
+            queues[i].put((udp_sock,request_data,address))
+            i = i + 1
 
 def local_server():
     udp_sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM,0)
