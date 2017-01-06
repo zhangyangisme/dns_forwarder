@@ -4,6 +4,7 @@ import socket
 import struct
 import threading
 import Queue
+import logging
 import sqlite3
 
 class Consumer(threading.Thread):
@@ -13,17 +14,14 @@ class Consumer(threading.Thread):
     def run(self):
         while True:
             sock,request_data,address = self.queue.get()
-            print "get request:",address
+            logging.info("get_request:%s"%str(address))
             response = send_request(request_data)
             sock.sendto(response,address)
-
-
 
 def send_request(request):
     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM,0)
     sock.connect(("114.114.114.114",53))
     request_length = len(request)
-    print request_length
     length = struct.pack("!H",request_length)
     sock.send(length)
     sock.send(request)
@@ -45,9 +43,8 @@ def forward_udp_dns(udp_sock):
             i = 0
         try:
             request_data,address = udp_sock.recvfrom(1024)
-            print address
         except Exception,e:
-            print "socket error",Exception,":",e
+            logging.exception("loged")
         else:
             queues[i].put((udp_sock,request_data,address))
             i = i + 1
@@ -60,6 +57,11 @@ def local_server():
     forward_udp_dns(udp_sock)
 
 def main():
+    logging.basicConfig(level=logging.DEBUG,
+                format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                datefmt='%H:%M:%S',
+                filename='dns_forwarder.log',
+                filemode='w+')
     local_server()
 
 if __name__ == "__main__":
