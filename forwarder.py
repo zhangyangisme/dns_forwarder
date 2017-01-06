@@ -11,12 +11,19 @@ class Consumer(threading.Thread):
     def __init__(self,arg):
         super(Consumer,self).__init__()
         self.queue = arg
+        self.count = 0
     def run(self):
         while True:
             sock,request_data,address = self.queue.get()
             logging.info("get_request:%s"%str(address))
-            response = send_request(request_data)
-            sock.sendto(response,address)
+            try:
+                response = send_request(request_data)
+                sock.sendto(response,address)
+                self.count = self.count + 1
+                if(self.count %50 == 0):
+				    logging.info("thread %s forward request %d"%(self.getName(),self.count))
+            except Exception,e:
+                logging.exception("thread %s"%self.getName())
 
 def send_request(request):
     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM,0)
@@ -37,6 +44,7 @@ def forward_udp_dns(udp_sock):
         t = Consumer(queue)
         queues.append(queue)
         t.setDaemon(False)
+        t.setName(str(i))
         t.start()
     while True:
         if i == 4:
@@ -59,9 +67,9 @@ def local_server():
 def main():
     logging.basicConfig(level=logging.DEBUG,
                 format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                datefmt='%H:%M:%S',
+                datefmt='%y-%m-%d %H:%M:%S',
                 filename='dns_forwarder.log',
-                filemode='w+')
+                filemode='a+')
     local_server()
 
 if __name__ == "__main__":
