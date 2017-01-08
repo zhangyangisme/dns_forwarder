@@ -21,7 +21,7 @@ class Consumer(threading.Thread):
                 sock.sendto(response,address)
                 self.count = self.count + 1
                 if(self.count %50 == 0):
-				    logging.info("thread %s forward request %d"%(self.getName(),self.count))
+                    logging.info("thread %s forward request %d"%(self.getName(),self.count))
             except Exception,e:
                 logging.exception("thread %s"%self.getName())
 
